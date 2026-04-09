@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+.env
+
+# YOLO model
+yolov8l-worldv2.pt
+
+# Node
+node_modules/
+
+# Extract
+extract/
+
+# Empty file
+__init__.py
+
+# Data (too large for git)
+data/keyframes/
+data/embed_kf/
+data/embed_ocr/
+data/embed_od/
+data/OCR/
+data/OD/
+data/MERGED/
