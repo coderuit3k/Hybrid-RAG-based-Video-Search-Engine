@@ -1,84 +1,85 @@
-# Video Search System 🎬
+# 🎯 Cross-Modal Video Retrieval System
 
 ![Demo Screenshot](./demo.png)
-An AI-powered video keyframe search system that leverages advanced machine learning models to search across video datasets using text queries. It utilizes hybrid search retrieval combining vector embeddings and reranking mechanisms to provide highly relevant results.
 
-## 🚀 Key Features
+An enterprise-grade, AI-powered video keyframe architecture designed to retrieve specific moments from massive video datasets using natural language queries. It leverages state-of-the-art vision-language models and a two-stage hybrid search pipeline to achieve both ultra-low latency and high-precision relevance.
 
-*   **Text-to-Image/Video Search:** Search through thousands of extracted video frames using natural language text queries.
-*   **Vector Search & Reranking:** Powered by Milvus Vector Database for ultra-fast similarity search and a HuggingFace Reranker (BGE) for improved accuracy and relevance.
-*   **Modern Interactive UI:** A high-performance, dark-themed responsive frontend built with React, Vite, and TailwindCSS.
-*   **GPU Accelerated:** Leverages NVIDIA GPUs for both backend embedding generation, reranking, and Milvus vector computations.
+## 🔥 Core AI Capabilities
 
-## 🛠️ Tech Stack
+*   **Cross-Modal Embeddings:** Utilizes **OpenAI CLIP** to map visual data (keyframes, extracted objects) and textual queries into a shared high-dimensional semantic space. 
+*   **Multilayered Hybrid Search:** Merges multiple embedding streams (`kf_embedding`, `ocr_embedding`, `obj_embedding`) using a dynamically `WeightedRanker` to maximize recall across diverse visual and textual contexts.
+*   **Two-Stage Retrieval Structure (RAG):** Implements a coarse-grained ANN search via Milvus, followed by a fine-grained, cross-encoder reranking phase using **BAAI FlagReranker (BGE)** for state-of-the-art precision.
+*   **Multilingual Query Understanding:** Integrates automated language translation (Vietnamese to English) for normalized embedding projection.
+*   **GPU-Accelerated Inference:** Engineered with PyTorch `inference_mode`, CUDA optimizations, and robust exception handling to sustain high-throughput tensor operations.
 
-### Web & Architecture
-*   **Frontend:** React 18, Vite, TailwindCSS, Axios
-*   **Backend:** FastAPI, Python, Uvicorn (ASGI)
-*   **Infrastructure:** Docker Compose
+## 🛠️ Technology Stack
 
-### AI / Machine Learning
-*   **Vector Database:** Milvus (GPU Enabled)
-*   **Embeddings:** `open_clip_torch`
-*   **Reranker:** `FlagEmbedding` (BAAI/bge-reranker)
-*   **Deep Learning Framework:** PyTorch, Transformers, Peft
+### Deep Learning & NLP Models
+*   **Vision-Language Model:** `open_clip_torch` (ViT/CLIP)
+*   **Cross-Encoder Reranker:** HuggingFace `FlagEmbedding`
+*   **Tensor Framework:** PyTorch (CUDA Backend)
 
-### Data Storage & Operations
-*   **Object Storage:** MinIO (S3 compatible)
-*   **Key-Value Store:** Etcd
-*   **Image Processing:** OpenCV, Pillow
+### Vector Search Infrastructure
+*   **Vector Database:** **Milvus** (Optimized for billion-scale ANN and Hybrid queries)
+*   **Hybrid Scoring:** `pymilvus` WeightedRanker
 
-## 📂 Project Structure
+### Application & Deployment
+*   **API Framework:** FastAPI, Uvicorn
+*   **Frontend:** React, Vite, TailwindCSS
+*   **Deployment:** Docker Compose
+
+## 📂 System Architecture Overview
 
 ```text
 video_search_project/
-├── backend/            # FastAPI python server, AI models and database interactions
-├── frontend/           # React + Vite application
-├── data/               # Local data storage for datasets and media
-├── extract/            # Extraction storage locations/scripts
-├── scripts/            # Utility scripts (e.g., migrations, processing)
-├── docker-compose.yml  # Docker environment configurations for Milvus & services
-└── README.md           # Project documentation
+├── backend/            # FastAPI core, Neural Network Inference, Milvus API integration
+│   ├── app/models/     # Centralized Model Manager (CLIP, OCR, Reranker loading & caching)
+│   ├── app/services/   # Multi-vector Hybrid Search orchestration & Translators
+│   └── scripts/        # Ingestion scripts for deep learning artifacts
+├── frontend/           # React + Vite Interactive UI
+└── docker-compose.yml  # Milvus Vector DB & Object Storage cluster setup
 ```
 
-## ⚙️ Getting Started
+## ⚙️ How to Run Locally
 
 ### Prerequisites
-*   Node.js & npm (for frontend)
-*   Python 3.10+ (for backend)
-*   Docker & Docker Compose (for infrastructure)
-*   NVIDIA GPU with CUDA installed (highly recommended)
+*   **NVIDIA GPU** with properly configured CUDA Toolkit (highly recommended for Inference and Milvus).
+*   **Docker & Docker Compose**
+*   **Python 3.10+** & **Node.js**
 
-### 1. Start Infrastructure (Milvus Vector DB)
-You can start up the required database and dependent services (MinIO, Etcd) using Docker Compose:
+### 1. Vector Database Cluster
+Launch the Milvus Vector Database along with its dependencies (MinIO, Etcd):
 ```bash
 docker-compose up -d milvus-standalone etcd minio attu
 ```
-*(Note: You can access the Attu dashboard at `http://localhost:8000` to inspect Milvus vectors)*
+*(GUI access to Attu is available at `http://localhost:8000` to inspect vector spaces).*
 
-### 2. Backend Setup
-Navigate to the `backend` directory and install the required dependencies:
+### 2. Neural Backend Engine
+Navigate to `backend`, setup local environment, and start inference API:
 ```bash
 cd backend
 python -m venv .venv
-# Activate your venv:
-# Windows: .venv\Scripts\activate
-# Linux/Mac: source .venv/bin/activate
+# Activate:
+# source .venv/bin/activate  (Linux/Mac)
+# .venv\Scripts\activate     (Windows)
+
 pip install -r requirements.txt
-```
-Run the FastAPI backend:
-```bash
 uvicorn app.main:app --host 0.0.0.0 --port 8080 --reload
 ```
 
-### 3. Frontend Setup
-Open a new terminal, **you MUST navigate to the `frontend` directory first**, then install packages and start the development server:
+### 3. Frontend Client
+In a separate terminal:
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-The React frontend should now be running (usually on `http://localhost:5173` or `http://localhost:3000`).
+Client runs at `http://localhost:3000`.
+
+## 📈 Search Strategy Deep Dive
+1. **Query Normalization:** Natural language input is translated/normalized.
+2. **Dense Retrieval (Phase 1):** The query is sequentially projected into multiple representation spaces (`kf`, `ocr`, `obj`) via CLIP to retrieve a large set of coarse candidates utilizing Approximate Nearest Neighbor (ANN) across the Milvus collections.
+3. **Cross-Encoder Scoring (Phase 2):** BAAI FlagReranker evaluates pairs of `(Query, Candidate Context)` simultaneously, computing explicit attention across the multimodal contextual representations to dynamically reorder the Top-K candidates for maximum hit-relevance.
 
 ## 📝 License
-This project is licensed under the MIT License - see the LICENSE file for details.
+Distributed under the MIT License.
